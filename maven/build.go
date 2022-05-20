@@ -17,6 +17,7 @@
 package maven
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
@@ -24,6 +25,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"os/user"
 	"path/filepath"
 
@@ -127,6 +129,73 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 	if userSet {
 		args = append([]string{"--file", pomFile}, args...)
 	}
+
+	egovVer, userSet := cr.Resolve("BP_EGOV_VERSION")
+	if !userSet {
+		egovVer = "4.0"
+	}
+	downloadUrl := "https://maven.egovframe.go.kr/publist/HDD1/public/egovframework_v4.0/2_DevelopmentEnvironment/maven_repository_4_0.zip"
+	switch egovVer {
+	case "4.0":
+		downloadUrl = "https://maven.egovframe.go.kr/publist/HDD1/public/egovframework_v4.0/2_DevelopmentEnvironment/maven_repository_4_0.zip"
+	case "3.9":
+		downloadUrl = "https://maven.egovframe.go.kr/publist/HDD1/public/egovframework_v3.9/2_DevelopmentEnvironment/maven_repository_3_9.zip"
+	case "3.8":
+		downloadUrl = "https://maven.egovframe.go.kr/publist/HDD1/public/egovframework_v3.8/2_DevelopmentEnvironment/maven_repository_3_8.zip"
+	case "3.7":
+		downloadUrl = "https://maven.egovframe.go.kr/publist/HDD1/public/egovframework_v3.7/2_DevelopmentEnvironment/maven_repository_3_7.zip"
+	case "3.6":
+		downloadUrl = "https://maven.egovframe.go.kr/publist/HDD1/public/egovframework_v3_6/2_DevelopmentEnvironment/mvnrepository_3.6.zip"
+	case "3.5":
+		downloadUrl = "https://maven.egovframe.go.kr/publist/HDD1/public/mvnrepository_3.5.zip"
+	case "3.0":
+		downloadUrl = "https://maven.egovframe.go.kr/publist/HDD1/public/mvnrepository_3.0.zip"
+	case "2.0":
+		downloadUrl = "https://www.egovframe.go.kr/wiki/lib/exe/fetch.php?media=egovframework:dev:mavenrepository_2.0.zip"
+	}
+
+	downloadDir, err := os.MkdirTemp(context.Application.Path, "ownloadDir")
+	if err != nil {
+		return libcnb.BuildResult{}, fmt.Errorf("unable to make downloadDir\n%w", err)
+	}
+
+	repoDir, err := os.MkdirTemp(context.Application.Path, "repoDir")
+	if err != nil {
+		return libcnb.BuildResult{}, fmt.Errorf("unable to make repoDir\n%w", err)
+	}
+
+	err = exec.Command("curl",
+		downloadUrl,
+		"-o",
+		filepath.Join(downloadDir, "mvnRepo.zip"),
+	).Run()
+	if err != nil {
+		return libcnb.BuildResult{}, fmt.Errorf("unable to download maven repository\n%w", err)
+	}
+
+	err = exec.Command("unzip",
+		filepath.Join(downloadDir, "mvnRepo.zip"),
+		"-d",
+		repoDir,
+	).Run()
+	if err != nil {
+		return libcnb.BuildResult{}, fmt.Errorf("unable to unzip mvnRepo.zip\n%wdownloadDir:%s\n,repoDir:%s", err, downloadDir, repoDir)
+	}
+
+	settingFileName := filepath.Join(context.Application.Path, "setting.xml")
+	settingFile, err := os.Create(settingFileName)
+	if err != nil {
+		return libcnb.BuildResult{}, fmt.Errorf("unable to create setting.xml\n%w", err)
+	}
+	defer settingFile.Close()
+
+	w := bufio.NewWriter(settingFile)
+	w.WriteString("<settings>\n")
+	w.WriteString("  <localRepository>" + repoDir + "</localRepository>\n")
+	w.WriteString("</settings>")
+	w.Flush()
+
+	args = append([]string{"-s", settingFileName}, args...)
 
 	if !b.TTY && !contains(args, []string{"-B", "--batch-mode"}) {
 		// terminal is not tty, and the user did not set batch mode; let's set it
