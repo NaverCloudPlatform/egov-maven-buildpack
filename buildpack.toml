@@ -21,7 +21,7 @@ api = "0.7"
   keywords = ["java", "maven", "build-system", "egov"]
   name = "NCP egov Maven Buildpack"
   sbom-formats = ["application/vnd.cyclonedx+json", "application/vnd.syft+json"]
-  version = "1.0.0"
+  version = "4.0.0"
 
   [[buildpack.licenses]]
     type = "Apache-2.0"
