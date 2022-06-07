@@ -1,4 +1,4 @@
-module github.com/paketo-buildpacks/maven/v6
+module github.com/NaverCloudPlatform/egov-maven-buildpack
 
 go 1.17
 

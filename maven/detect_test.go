@@ -17,6 +17,7 @@
 package maven_test
 
 import (
+	"github.com/NaverCloudPlatform/egov-maven-buildpack/maven"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -25,8 +26,6 @@ import (
 	"github.com/buildpacks/libcnb"
 	. "github.com/onsi/gomega"
 	"github.com/sclevine/spec"
-
-	"github.com/paketo-buildpacks/maven/v6/maven"
 )
 
 func testDetect(t *testing.T, context spec.G, it spec.S) {
