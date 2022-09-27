@@ -1,4 +1,4 @@
-# `NAVER Cloud Platform eGov Maven Buildpack`
+# `docker.io/navercloud/egov-maven-buildpack:4.0.0`
 
 The NAVER Cloud Platform eGov Maven Buildpack is a Cloud Native Buildpack that builds Maven-based applications from source with eGov Libray.
 
